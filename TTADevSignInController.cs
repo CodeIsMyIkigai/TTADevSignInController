@@ -21,21 +21,22 @@ using System.Security.Principal;
     to a production environment, or any environment where adhoc user/role creation could cause problems.
 
     Installation:
-    1) Put TTADevSignInController.cs into the controllers director for your appliction.
-    2) Right click on the controller in the Solution Explorer and allowing the solution to see the file
-    3) Build your project.
-    4) Run the application (IIS Express), launching a browser window and go to the following URL: /TTADevSignIn/Index
+    1) Put TTADevSignInController.cs into the controllers directory for your appliction.
+    2) In the upper right corner of your Solution Explorer window, click 'Show All Files'
+    3) Right click on the controller in the Solution Explorer and select the 'Include in Project' option.
+    4) Build your project.
+    5) Run the application (IIS Express), launching a browser window and go to the following URL: /TTADevSignIn/Index
     
-    5) ADD: TTADevSignInController.cs to your ignore file.
+    6) ADD: TTADevSignInController.cs to your ignore file.
+ 
+
  
 */
 namespace ManagementPortal.Controllers
-{
-    [Authorize]
+{    
     public class TTADevSignInController : Controller
     {             
-       
-        [AllowAnonymous]
+ 
         public async Task<ActionResult> Index()
         {
             //Get View display data
@@ -43,9 +44,7 @@ namespace ManagementPortal.Controllers
             //Get DB Context to get list of all available roles for the rendered view.
             ApplicationDbContext db = new ApplicationDbContext();
             List<string> allRoles = db.Roles.Select(r => r.Name).ToList<string>();
-
-            //Get UserManager to get appropriate data about the user
-            var UserManager = HttpContext.GetOwinContext().Get<ApplicationUserManager>();
+                        
 
             IPrincipal user = HttpContext.User;
 
@@ -62,16 +61,18 @@ namespace ManagementPortal.Controllers
             {
                 userName = user.Identity.Name;
                 string userId = user.Identity.GetUserId();
+
+                //Get UserManager to get appropriate data about the user
+                var UserManager = HttpContext.GetOwinContext().Get<ApplicationUserManager>();
                 userRoles = UserManager.GetRoles(userId).ToList<string>();
             }
 
             //Render output and return
-            string resultHtml = RenderView(userName, userRoles, allRoles, "");
+            string resultHtml = RenderView(userName, userRoles, allRoles, "", "LOGIN");
             return base.Content(resultHtml, "text/html", Encoding.UTF8);
         }
 
         [HttpPost]
-        [AllowAnonymous]
         public async Task<ActionResult> Login(FormCollection formCollection)
         {
             //Get Managers
@@ -81,9 +82,7 @@ namespace ManagementPortal.Controllers
             //Get DB Context to get list of all available roles for the rendered view.
             ApplicationDbContext db = new ApplicationDbContext();                        
             List<string> allRoles = db.Roles.Select(r => r.Name).ToList<string>();
-            
-            //Get Command
-            string command = formCollection.Get("COMMAND");
+                        
             StringBuilder statusMessage = new StringBuilder("One-Click login: <br/><ul>");
             //User Name
             string userName = formCollection.Get("LOGIN_EMAIL");
@@ -115,12 +114,11 @@ namespace ManagementPortal.Controllers
             ApplicationUser user = UserManager.FindByName(userName);
             List<string> userRoles = UserManager.GetRoles(user.Id).ToList<string>();
             
-            string resultHtml = RenderView(userName, userRoles, allRoles, statusMessage.ToString());
+            string resultHtml = RenderView(userName, userRoles, allRoles, statusMessage.ToString(), "LOGIN");
             return base.Content(resultHtml, "text/html", Encoding.UTF8);
         }
 
         [HttpPost]
-        [AllowAnonymous]
         public async Task<ActionResult> CreateUser(FormCollection formCollection)
         {
             //Get Managers
@@ -160,12 +158,11 @@ namespace ManagementPortal.Controllers
                 userRoles = new List<string>();
             }
 
-            string resultHtml = RenderView(userName, userRoles, allRoles, statusMessage.ToString());
+            string resultHtml = RenderView(userName, userRoles, allRoles, statusMessage.ToString(), "CREATE_LOGIN");
             return base.Content(resultHtml, "text/html", Encoding.UTF8);
         }
 
         [HttpPost]
-        [AllowAnonymous]
         public async Task<ActionResult> AssignRoles(FormCollection formCollection)
         {
             //Get Managers
@@ -223,11 +220,11 @@ namespace ManagementPortal.Controllers
                 statusMessage.Append("<li>No user logged in and unable to assign role.</li>");
             }
 
-            string resultHtml = RenderView(userName, userRoles, allRoles.ToList<string>(), statusMessage.ToString());
+            string resultHtml = RenderView(userName, userRoles, allRoles.ToList<string>(), statusMessage.ToString(), "ASSIGN_ROLES");
             return base.Content(resultHtml, "text/html", Encoding.UTF8);
         }
 
-        [AllowAnonymous]
+        [HttpPost]
         public async Task<ActionResult> CreateRole(FormCollection formCollection)
         {
             //Status for output.
@@ -286,14 +283,14 @@ namespace ManagementPortal.Controllers
             List<string> allRoles = db.Roles.Select(r => r.Name).ToList<string>();
 
             //Render output and return
-            string resultHtml = RenderView(userName, userRoles, allRoles, statusMessage.ToString());
+            string resultHtml = RenderView(userName, userRoles, allRoles, statusMessage.ToString(), "CREATE_ROLE");
             return base.Content(resultHtml, "text/html", Encoding.UTF8);
         }
         
-        public string RenderView(string userName, List<string> userRoles, List<string> allRoles, string statusMessage)
+        public string RenderView(string userName, List<string> userRoles, List<string> allRoles, string statusMessage, string activeNav)
         {            
             StringBuilder sbOutput = new StringBuilder();
-
+            
             //Sort Role Lists
             allRoles.Sort();
             userRoles.Sort();
@@ -301,7 +298,7 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("<!DOCTYPE html>");
             sbOutput.Append("<html lang=\"en\">");
             sbOutput.Append("<head>");
-            sbOutput.Append("  <title>Bootstrap Example</title>");
+            sbOutput.Append("  <title>TTA Dev Sign In</title>");
             sbOutput.Append("  <meta charset=\"utf-8\">");
             sbOutput.Append("  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">");
 
@@ -332,64 +329,61 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("<body>");
             sbOutput.Append("<div class=\"container\">");
             sbOutput.Append("  <h2 class=\"mt-5\">The Tech Academy Development Sign In App</h2>");
-            sbOutput.Append("  <p>The purpose of this tool is to allow TTA Developers to sign into and application without hassle.<br /><b> This Controller and it's Views should never be deployed to a customer site.</b></p>");
-            if(userName != null && userName != "")
-            {
-                sbOutput.Append("<div class=\"card mb-3\" style=\"width: 18rem;\">");
-                sbOutput.Append("  <div class=\"card-body\">");
-                sbOutput.Append("    <h5 class=\"card-title\">Logged In</h5>");
-                sbOutput.Append("    <p class=\"card-text\">");
-                sbOutput.Append(userName);                
-                sbOutput.Append("    </p>");
-                sbOutput.Append("  </div>");
-                sbOutput.Append("</div>\n");
-            }
-            if(statusMessage != "")
-            {
-                sbOutput.Append("<div class=\"card mb-3\" style=\"width: 18rem;\">");
-                sbOutput.Append("  <div class=\"card-body\">");
-                sbOutput.Append("    <h5 class=\"card-title\">Status Message</h5>");
-                sbOutput.Append("    <p class=\"card-text\">");
-                sbOutput.Append(statusMessage);
-                sbOutput.Append("    </p>");
-                sbOutput.Append("  </div>");
-                sbOutput.Append("</div>\n");
-            }
+            sbOutput.Append("  <p>The purpose of this tool is to allow TTA Developers to sign into and application without hassle.<br />" +
+                              "<b> This Controller should never be deployed to a customer site.</b></p>");
+
+            
+            sbOutput.Append("  <button type=\"button\" class=\"btn btn-primary\" data-toggle=\"collapse\" data-target=\"#login\">Login</button>");
+            sbOutput.Append("  <button type=\"button\" class=\"btn btn-primary\" data-toggle=\"collapse\" data-target=\"#status\">Status</button>");
+            sbOutput.Append("  <div id=\"login\" class=\"mb-1 collapse show\">");
+            sbOutput.Append(userName);
+            sbOutput.Append("  </div>");
+            sbOutput.Append("  <div id=\"status\" class=\"mb-1 collapse show\">");
+            sbOutput.Append(statusMessage);
+            sbOutput.Append("  </div>");
+            sbOutput.Append("  <div>&nbsp;</div>");
+
 
             sbOutput.Append("  <ul class=\"nav nav-pills\">");
             sbOutput.Append("    <li class=\"nav-item\">");
-            sbOutput.Append("       <a class=\"nav-link active\" data-toggle=\"pill\" href=\"#home\">Logins</a>");
+            sbOutput.Append("       <a class=\"nav-link ");
+            if ("LOGIN".Equals(activeNav)) { sbOutput.Append("active"); }           
+            sbOutput.Append(" \" data-toggle=\"pill\" href=\"#home\">Logins</a>");
             sbOutput.Append("    </li>");
             sbOutput.Append("    <li class=\"nav-item\">");
-            sbOutput.Append("       <a class=\"nav-link\" data-toggle=\"pill\" href=\"#menu1\">Create Login</a>");
+            sbOutput.Append("       <a class=\"nav-link ");
+            if ("CREATE_LOGIN".Equals(activeNav)) { sbOutput.Append("active"); }
+            sbOutput.Append(" \" data-toggle=\"pill\" href=\"#menu1\">Create Login</a>");
             sbOutput.Append("    </li>");
             sbOutput.Append("    <li class=\"nav-item\">");
-            sbOutput.Append("       <a class=\"nav-link\" data-toggle=\"pill\" href=\"#menu2\">Assign Roles</a>");
+            sbOutput.Append("       <a class=\"nav-link ");
+            if ("ASSIGN_ROLES".Equals(activeNav)) { sbOutput.Append("active"); }
+            sbOutput.Append(" \" data-toggle=\"pill\" href=\"#menu2\">Assign Roles</a>");
             sbOutput.Append("    </li>");
             sbOutput.Append("    <li class=\"nav-item\">");
-            sbOutput.Append("       <a class=\"nav-link\" data-toggle=\"pill\" href=\"#menu3\">Create Role</a>");
+            sbOutput.Append("       <a class=\"nav-link ");
+            if ("CREATE_ROLE".Equals(activeNav)) { sbOutput.Append("active"); }
+            sbOutput.Append(" \" data-toggle=\"pill\" href=\"#menu3\">Create Role</a>");
             sbOutput.Append("    </li>");
             sbOutput.Append("  </ul><div>&nbsp;</div>");
             sbOutput.Append("  <div class=\"tab-content\">");
-            sbOutput.Append("    <div id=\"home\" class=\"tab-pane container active\">");
+            sbOutput.Append("    <div id=\"home\" class=\"tab-pane container ");
+            if ("LOGIN".Equals(activeNav)) { sbOutput.Append("active"); } else { sbOutput.Append("fade"); }
+            sbOutput.Append("\">");
             sbOutput.Append("        <h3>Logins</h3>");
             sbOutput.Append("        <p>");
             sbOutput.Append("        <form name=\"CREATE_LOGIN_FORM\" action=\"/TTADevSignIn/Login\" method=\"POST\" method=\"POST\" class=\"form-group\" />");
-            sbOutput.Append("           <input type=\"hidden\" name=\"COMMAND\" value=\"ONE_CLICK_LOGIN\" />");
-            sbOutput.Append("           <div class=\"form-group\">");
+            sbOutput.Append("           <div class=\"form-group mb-1\">");
             sbOutput.Append("                <span class=\"col-md-2\"><button type=\"button\" class=\"btn btn-primary\" onclick=\"setFormData(this.form, 'Jack');\"> Jack </button></span>");
-            sbOutput.Append("                <span class=\"col-md-3\">test@gmail.com</span");
-            sbOutput.Append("                <span class=\"col-md-2\">Admin</span>");
+            sbOutput.Append("                <span class=\"col-md-3\">test@gmail.com</span>");
             sbOutput.Append("            </div>");
-            sbOutput.Append("            <div class=\"form-group\">");
+            sbOutput.Append("            <div class=\"form-group mb-1\">");
             sbOutput.Append("                <span class=\"col-md-2\"><button type=\"button\" class=\"btn btn-primary\" onclick=\"setFormData(this.form, 'Jill');\"> Jill </button></span>");
             sbOutput.Append("                <span class=\"col-md-3\">test@123.com</span>");
-            sbOutput.Append("                <span class=\"col-md-2\">Manager</span>");
             sbOutput.Append("           </div>");
-            sbOutput.Append("            <div class=\"form-group\">");
+            sbOutput.Append("            <div class=\"form-group mb-1\">");
             sbOutput.Append("                <span class=\"col-md-2\"><button type=\"button\" class=\"btn btn-primary\" onclick=\"setFormData(this.form, 'Joe');\"> Joe </button></span>");
             sbOutput.Append("                <span class=\"col-md-3\">joe @doe.com</span>");
-            sbOutput.Append("                <span class=\"col-md-2\">Employee</span>");
             sbOutput.Append("            </div>");
             sbOutput.Append("            <input type=\"hidden\" name=\"LOGIN_EMAIL\" value=\"\" />");
             sbOutput.Append("            <input type=\"hidden\" name=\"LOGIN_PASSWORD\" value=\"\" />");
@@ -397,11 +391,12 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("        </p>");
             sbOutput.Append("    </div>");
 
-            sbOutput.Append("    <div id=\"menu1\" class=\"tab-pane container fade\">");
+            sbOutput.Append("    <div id=\"menu1\" class=\"tab-pane container ");
+            if ("CREATE_LOGIN".Equals(activeNav)) { sbOutput.Append("active"); } else { sbOutput.Append("fade"); }
+            sbOutput.Append(" \">");
             sbOutput.Append("        <h3>Create Login</h3>");
             sbOutput.Append("        <p>");
             sbOutput.Append("        <form name=\"CREATE_USER_FORM\" action=\"/TTADevSignIn/CreateUser\" method=\"POST\" class=\"form-group\" />");
-            sbOutput.Append("            <input type=\"hidden\" name=\"COMMAND\" value=\"CREATE_USER\" />");
             sbOutput.Append("            <div class=\"form-group\">");
             sbOutput.Append("                <label for=\"exampleInputEmail1\">Email address/Login Name</label>");
             sbOutput.Append("                <input type=\"email\" class=\"form-control\" id=\"exampleInputEmail1\" aria-describedby=\"emailHelp\" name=\"CREATE_EMAIL\" placeholder=\"Enter email\">");           
@@ -416,11 +411,12 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("    </div>");
 
 
-            sbOutput.Append("    <div id=\"menu2\" class=\"tab-pane container fade\">");
+            sbOutput.Append("    <div id=\"menu2\" class=\"tab-pane container ");
+            if ("ASSIGN_ROLES".Equals(activeNav)) { sbOutput.Append("active"); } else { sbOutput.Append("fade"); }
+            sbOutput.Append(" \">");
             sbOutput.Append("        <h3>Assign Roles</h3>");
             sbOutput.Append("        <p>");
             sbOutput.Append("        <form name=\"ASSIGN_ROLES_FORM\" action=\"/TTADevSignIn/AssignRoles\" method=\"POST\" class=\"form-group\" />");
-            sbOutput.Append("            <input type=\"hidden\" name=\"COMMAND\" value=\"ASSIGN_ROLES\" />");            
             sbOutput.Append("            <div class=\"form-group\">");
             sbOutput.Append("                <label for=\"ASSIGNED_ROLES\"><b>Roles:</b> Use CTRL-Click to select single or multiple roles.</label>\n");
             sbOutput.Append("                <select multiple class=\"form-control\" name=\"ASSIGNED_ROLES\">\n");            
@@ -446,7 +442,9 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("        </p>");
             sbOutput.Append("    </div>");
 
-            sbOutput.Append("    <div id=\"menu3\" class=\"tab-pane container fade\">");
+            sbOutput.Append("    <div id=\"menu3\" class=\"tab-pane container ");
+            if ("CREATE_ROLE".Equals(activeNav)) { sbOutput.Append("active"); } else { sbOutput.Append("fade"); }
+            sbOutput.Append(" \">");
             sbOutput.Append("        <h3>Create Role</h3>");
             sbOutput.Append("        <p>");
             //list Roles
@@ -460,7 +458,6 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("        </ul>");
             //Roles Form
             sbOutput.Append("        <form name=\"CREATE_ROLE_FORM\" action=\"/TTADevSignIn/CreateRole\" method=\"POST\" class=\"form-group\" />");
-            sbOutput.Append("            <input type=\"hidden\" name=\"COMMAND\" value\"CREATE_ROLE\" />");
             sbOutput.Append("            <div class=\"form-group\">");
             sbOutput.Append("                <label for=\"new_role_1\">New Role Name</label>");
             sbOutput.Append("                <input type=\"text\" class=\"form-control\" id=\"new_role_1\" name=\"CREATE_ROLE\" placeholder=\"Enter Role Name\">");
