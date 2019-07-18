@@ -1,5 +1,4 @@
-﻿using ManagementPortal.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -11,6 +10,10 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Identity.EntityFramework;
 using System.Text;
 using System.Security.Principal;
+
+// Add using statement for models here:
+//   example: using ManagementPortal.Models;
+
 /*
     Title: The Tech Academy Developer Sign in Controller
     Author: Chester Terry, student at TTA.
@@ -24,10 +27,11 @@ using System.Security.Principal;
     1) Put TTADevSignInController.cs into the controllers directory for your appliction.
     2) In the upper right corner of your Solution Explorer window, click 'Show All Files'
     3) Right click on the controller in the Solution Explorer and select the 'Include in Project' option.
-    4) Build your project.
-    5) Run the application (IIS Express), launching a browser window and go to the following URL: /TTADevSignIn/Index
+    4) Add using statement for your Models namespace in this file.
+    5) Build your project.
+    6) Run the application (IIS Express), launching a browser window and go to the following URL: /TTADevSignIn/Index
     
-    6) ADD: TTADevSignInController.cs to your ignore file.
+    7) ADD: TTADevSignInController.cs to your ignore file.
  
 
  
@@ -40,11 +44,10 @@ namespace ManagementPortal.Controllers
         public async Task<ActionResult> Index()
         {
             //Get View display data
-            
+
             //Get DB Context to get list of all available roles for the rendered view.
             ApplicationDbContext db = new ApplicationDbContext();
             List<string> allRoles = db.Roles.Select(r => r.Name).ToList<string>();
-                        
 
             IPrincipal user = HttpContext.User;
 
@@ -80,9 +83,9 @@ namespace ManagementPortal.Controllers
             var UserManager = HttpContext.GetOwinContext().Get<ApplicationUserManager>();
             
             //Get DB Context to get list of all available roles for the rendered view.
-            ApplicationDbContext db = new ApplicationDbContext();                        
+            ApplicationDbContext db = new ApplicationDbContext();
             List<string> allRoles = db.Roles.Select(r => r.Name).ToList<string>();
-                        
+
             StringBuilder statusMessage = new StringBuilder("One-Click login: <br/><ul>");
             //User Name
             string userName = formCollection.Get("LOGIN_EMAIL");
@@ -131,6 +134,7 @@ namespace ManagementPortal.Controllers
             //Get DB Context to get list of all available roles for the rendered view.
             ApplicationDbContext db = new ApplicationDbContext();
             List<string> allRoles = db.Roles.Select(r => r.Name).ToList<string>();
+
             string userName = formCollection.Get("CREATE_EMAIL");
             string password = formCollection.Get("CREATE_PASSWORD");
 
@@ -171,7 +175,7 @@ namespace ManagementPortal.Controllers
 
             //Get DB Context to get list of all available roles for the rendered view.
             ApplicationDbContext db = new ApplicationDbContext();
-            string[] allRoles = db.Roles.Select(r => r.Name).ToArray<string>();
+            List<string> allRoles = db.Roles.Select(r => r.Name).ToList<string>();
 
             StringBuilder statusMessage = new StringBuilder("<ul>");
 
@@ -230,8 +234,8 @@ namespace ManagementPortal.Controllers
             //Status for output.
             StringBuilder statusMessage = new StringBuilder("Role Creation: <ul>");
 
-            //Get DB Context to get list of all available roles for the rendered view and to create new role
-            ApplicationDbContext db = new ApplicationDbContext();
+            //Get DB Context to get list of all available roles for the rendered view.
+            ApplicationDbContext db = new ApplicationDbContext();            
 
             //The new role name subbmited by the user
             string newRole = formCollection.Get("CREATE_ROLE");
@@ -314,9 +318,9 @@ namespace ManagementPortal.Controllers
             
             sbOutput.Append("console.log(\"HERE\");\n");
             sbOutput.Append("   var userData = new Object();\n");
-            sbOutput.Append("       userData['Jack'] = { Password: '!Pass1234', Email: 'test@gmail.com' };\n");
-            sbOutput.Append("       userData['Jill'] = { Password: '123ABCdef!', Email: 'hello@gmail.com' };\n");
-            sbOutput.Append("       userData['Joe'] = { Password: ' 789asdASD!', Email: 'joe@doe.com' };\n");
+            sbOutput.Append("       userData['Jack'] = { Password: '!Pass1234', Email: 'Jack@Jack.com' };\n");
+            sbOutput.Append("       userData['Jill'] = { Password: '!Pass1234', Email: 'Jill@Jill.com' };\n");
+            sbOutput.Append("       userData['Joe'] = { Password:  '!Pass1234', Email: 'Joe@Joe.com' };\n");
             sbOutput.Append("   function setFormData(form, userName)\n");
             sbOutput.Append("   {\n");     
             sbOutput.Append("        form.elements[\"LOGIN_EMAIL\"].value = userData[userName].Email;\n");            
@@ -331,18 +335,10 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("  <h2 class=\"mt-5\">The Tech Academy Development Sign In App</h2>");
             sbOutput.Append("  <p>The purpose of this tool is to allow TTA Developers to sign into and application without hassle.<br />" +
                               "<b> This Controller should never be deployed to a customer site.</b></p>");
-
-            
-            sbOutput.Append("  <button type=\"button\" class=\"btn btn-primary\" data-toggle=\"collapse\" data-target=\"#login\">Login</button>");
-            sbOutput.Append("  <button type=\"button\" class=\"btn btn-primary\" data-toggle=\"collapse\" data-target=\"#status\">Status</button>");
-            sbOutput.Append("  <div id=\"login\" class=\"mb-1 collapse show\">");
-            sbOutput.Append(userName);
-            sbOutput.Append("  </div>");
-            sbOutput.Append("  <div id=\"status\" class=\"mb-1 collapse show\">");
-            sbOutput.Append(statusMessage);
-            sbOutput.Append("  </div>");
-            sbOutput.Append("  <div>&nbsp;</div>");
-
+            sbOutput.Append("</div>");
+            sbOutput.Append("<div class=\"container\">");
+            sbOutput.Append("<div class=\"row\">");
+            sbOutput.Append("<div class=\"col-sm-8\">");
 
             sbOutput.Append("  <ul class=\"nav nav-pills\">");
             sbOutput.Append("    <li class=\"nav-item\">");
@@ -364,6 +360,9 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("       <a class=\"nav-link ");
             if ("CREATE_ROLE".Equals(activeNav)) { sbOutput.Append("active"); }
             sbOutput.Append(" \" data-toggle=\"pill\" href=\"#menu3\">Create Role</a>");
+            sbOutput.Append("    </li>");
+            sbOutput.Append("    <li class=\"nav-item\">");
+            sbOutput.Append("       <a class=\"nav-link\" href=\"../\">Home/Index</a>");
             sbOutput.Append("    </li>");
             sbOutput.Append("  </ul><div>&nbsp;</div>");
             sbOutput.Append("  <div class=\"tab-content\">");
@@ -467,6 +466,17 @@ namespace ManagementPortal.Controllers
             sbOutput.Append("        </p>");
             sbOutput.Append("    </div>");
             sbOutput.Append("  </div>");
+            
+            sbOutput.Append("</div>");
+            sbOutput.Append("  <div class=\"col-sm-4\">");
+            sbOutput.Append("  <h5>Status</h5>");
+            sbOutput.Append("  <b>Login Name:</b>&nbsp;");
+            sbOutput.Append(userName);
+            sbOutput.Append("  <br/>");
+            sbOutput.Append("  <b>Status Messages:</b><br/>");
+            sbOutput.Append(statusMessage);
+            sbOutput.Append("  </div>");
+            sbOutput.Append("</div>");
             sbOutput.Append("</div>");
             sbOutput.Append("</body>");
             sbOutput.Append("</html>");
